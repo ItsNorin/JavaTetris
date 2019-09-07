@@ -48,16 +48,27 @@ public class Screen extends JFrame {
 				case KeyEvent.VK_E:
 					g.rotate(true);
 					break;
-					
+				
+				case KeyEvent.VK_LEFT:
 				case KeyEvent.VK_A:
 					g.move(-1, 0);
 					break;
+				case KeyEvent.VK_RIGHT:
 				case KeyEvent.VK_D:
 					g.move(1, 0);
 					break;
 					
+				case KeyEvent.VK_DOWN:
 				case KeyEvent.VK_S:
 					g.move(0, 1);
+					break;
+					
+				case KeyEvent.VK_SPACE:
+					if(g.isPaused())
+						g.resume();
+					else
+						g.pause();
+					break;
 				}
 			}
 
