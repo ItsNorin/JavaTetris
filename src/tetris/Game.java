@@ -47,6 +47,8 @@ public class Game extends JPanel implements ActionListener {
 	private int speed;
 	private int linesCleared;
 
+	private boolean canMove;
+	
 	public Game() {
 		setMinimumSize(SCREEN_SIZE);
 		setMaximumSize(SCREEN_SIZE);
@@ -56,6 +58,9 @@ public class Game extends JPanel implements ActionListener {
 		pieceQue = new LinkedList<>();
 		r = new Random();
 		tm = new Timer(speed,this);
+		score = 0;
+		linesCleared = 0;
+		canMove = false;
 	}
 
 	
@@ -82,6 +87,8 @@ public class Game extends JPanel implements ActionListener {
 		tm.setDelay(1000);
 		tm.setRepeats(true);
 		
+
+		canMove = true;
 		setVisible(true);
 	}
 
@@ -90,45 +97,58 @@ public class Game extends JPanel implements ActionListener {
 	 * @param dy y offset
 	 */
 	public void move(int dx, int dy) {
-		if(!collides(dx, dy)) {
-			currentPosition.x += dx;
-			currentPosition.y += dy;
+		if(canMove) {
+			canMove = false;
+			if(!collides(dx, dy, currentRotation) && !isPieceOutOfBounds(dx, dy, currentRotation)) {
+				currentPosition.x += dx;
+				currentPosition.y += dy;
+				repaint();
+			}
+			canMove = true;
 		}
-		
-		repaint();
 	}
 	
 	/** rotates piece if possible in given direction
 	 * @param clockwise True if clockwise, false if CCW
 	 */
 	public void rotate(boolean clockwise) {
-		int newRotation = currentRotation;
-		
-		if(clockwise) 
-			newRotation++;
-		else
-			newRotation--;
-		
-		if(newRotation < 0)
-			newRotation += 4;
-		
-		else if(newRotation > 3)
-			newRotation -= 4;
-		
-		if(!collides(newRotation))
-			currentRotation = newRotation;
-		
-		repaint();
+		if(canMove) {
+			canMove = false;
+			int newRotation = currentRotation;
+			
+			if(clockwise) 
+				newRotation++;
+			else
+				newRotation--;
+			
+			if(newRotation < 0)
+				newRotation += 4;
+			
+			else if(newRotation > 3)
+				newRotation -= 4;
+			
+			if(!collides(0, 0, newRotation) && !isPieceOutOfBounds(0, 0, newRotation)) {
+				currentRotation = newRotation;
+				repaint();
+			}
+			canMove = true;
+		}
+	}
+	
+	public boolean isPaused() {
+		return !tm.isRunning();
 	}
 	
 	/** Pauses the game  */
 	public void pause() {
+		canMove = false;
 		tm.stop();
 	}
 
 	
 	/** Resumes the game */
 	public void resume() {
+		canMove = true;
 		tm.start();
 	}
 	
@@ -151,13 +171,6 @@ public class Game extends JPanel implements ActionListener {
 		return tetriminos[pieceQue.poll()];
 	}
 	
-	 /** @param p Point
-	 * @return true if piece is in bounds
-	 */
-	private static boolean isOutOfBounds(Point p) {
-		return p.x < 0 || p.x >= FIELD_WIDTH || p.y >= FIELD_HEIGHT;
-	}
-	
 	/**
 	 * @param p Point
 	 * @param dx x offset
@@ -171,39 +184,40 @@ public class Game extends JPanel implements ActionListener {
 	/**@param dX X offset
 	 * @param dY Y offset
 	 * @param rotation rotation of piece
-	 * @return true if piece collides with anything in field, or is out of bounds at given offset  */
+	 * @return true if piece collides with anything in field */
 	private boolean collides(int dX, int dY, int rotation) {
 		for(Point p : currentPiece.getShape()[rotation]) {
 			Point cp = offsetPoint(p, dX, dY);
-
-			if(isOutOfBounds(cp))
-				return true;
 			
 			// only check if piece is in play field
-			if(cp.y >= 0) 
+			if(cp.y >= 0 && !isTileOutOfBounds(cp)) 
 				if(field[cp.x][cp.y].exists())
 					return true;
 		}
 		return false;
 	}
 	
-	/**@param dX X offset
-	 * @param dY Y offset
-	 * @return true if piece collides with anything in field, or is out of bounds at given offset  */
-	private boolean collides(int dX, int dY) {
-		return collides(dX, dY, currentRotation);
+	 /**@param p Point
+	  * @return true if tile is in bounds */
+	private static boolean isTileOutOfBounds(Point p) {
+		return p.x < 0 || p.x >= FIELD_WIDTH || p.y >= FIELD_HEIGHT;
 	}
 	
-	/**@param rotation new rotation of piece
-	 * @return true if piece collides with anything in field, or is out of bounds at given offset */
-	private boolean collides(int rotation) {
-		return collides(0,0,rotation);
+	/**@param dX x offset of piece
+	 * @param dY y offset of piece
+	 * @param rotation rotation of piece
+	 * @return true if current piece is out of bounds at given offset and rotation */
+	private boolean isPieceOutOfBounds(int dX, int dY, int rotation) {
+		for (Point p : currentPiece.getShape()[rotation]) {
+			if (isTileOutOfBounds(offsetPoint(p, dX, dY)))
+				return true;
+		}
+		return false;
 	}
-	
 	
 	/** @return true if piece is currently resting on top of another  */
 	private boolean hasLanded() {
-		return collides(0, 1, currentRotation);
+		return collides(0, 1, currentRotation) || isPieceOutOfBounds(0, 1, currentRotation);
 	}
 	
 	
@@ -211,6 +225,7 @@ public class Game extends JPanel implements ActionListener {
 	 * @return score for clearing lines based on level and number of lines cleared
 	 */
 	private int clearLines() {
+		canMove = false;
 		int n = 0;
 		int maxY = 0;
 		
@@ -235,6 +250,7 @@ public class Game extends JPanel implements ActionListener {
 		}
 
 		linesCleared += n;
+		canMove = true;
 		
 		switch(n) {
 		case 1: 	return 40   * (level + 1);
@@ -255,14 +271,17 @@ public class Game extends JPanel implements ActionListener {
 	
 	/** makes current piece part of the field */
 	private void dropCurrentPieceIntoField() {
-		for(Point p : currentPiece.getShape()[currentRotation]) {
-			Point cp = offsetPoint(p, 0, 0);
-			if(!isOutOfBounds(cp)) {
+		canMove = false;
+		for(int i = 0; i < 4; i++) {
+			Point cp = offsetPoint(currentPiece.getShape()[currentRotation][i], 0, 0);
+			if(!isTileOutOfBounds(cp)) 
 				field[cp.x][cp.y].set(currentPiece.getColor());
-			}
 		}
 		score += clearLines();
-		System.out.println(score);
+		System.out.print(score);
+		System.out.print(", at lvl");
+		System.out.println(level);
+		canMove = true;
 	}
 	
 	
@@ -284,12 +303,10 @@ public class Game extends JPanel implements ActionListener {
 				field[x][y].paint(g, TILE_SIZE, x, y);
 
 		for (Point p : currentPiece.getShape()[currentRotation]) {
-			Point cp = new Point(currentPosition.x + p.x, currentPosition.y + p.y);
+			Point cp = offsetPoint(p,0,0);
 
-			if (!isOutOfBounds(cp)) {
-				Tile t = new Tile(currentPiece.getColor());
-				t.paint(g, TILE_SIZE, cp.x, cp.y);
-			}
+			if (!isTileOutOfBounds(cp)) 
+				Tile.paint(g, currentPiece.getColor(), TILE_SIZE, cp.x, cp.y);
 		}
 	}
 	
@@ -298,6 +315,7 @@ public class Game extends JPanel implements ActionListener {
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		canMove = false;
 		if(hasLanded()) {
 			dropCurrentPieceIntoField();
 			currentPiece = getNextPiece();
@@ -307,6 +325,7 @@ public class Game extends JPanel implements ActionListener {
 		}
 		
 		repaint();
+		canMove = true;
 	}
 
 }

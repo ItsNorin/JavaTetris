@@ -50,6 +50,25 @@ public class Tile {
 		return exists;
 	}
 	
+	/** Paint a tile of given color at given position
+	 * @param g Graphics
+	 * @param c Color
+	 * @param tileSize Size of tile in pixels
+	 * @param xPos x index in game field
+	 * @param yPos y index in game field
+	 */
+	static void paint(Graphics g, Color c, int tileSize, int xPos, int yPos) {
+		g.setColor(c);
+		g.fillRect(xPos*tileSize, yPos*tileSize, tileSize, tileSize);
+		//highlight
+		g.setColor(HIGHLIGHT_COLOR);
+		g.fillRect(xPos*tileSize + tileSize/12, yPos*tileSize + tileSize/12, tileSize/3, tileSize/6);
+		g.fillRect(xPos*tileSize + tileSize/12, yPos*tileSize + tileSize/12, tileSize/6, tileSize/3);
+		//border
+		g.setColor(BORDER_COLOR);
+		g.drawRect(xPos*tileSize, yPos*tileSize, tileSize, tileSize);
+	}
+	
 	/**
 	 * Draws in a tile at the given position. If tile doesn't exist, draws backdrop instead.
 	 * @param tileSize Size of tile in pixels
@@ -60,15 +79,7 @@ public class Tile {
 	public void paint(Graphics g, int tileSize, int xPos, int yPos) {
 		if(this.exists) {
 			//fill with tile
-			g.setColor(color);
-			g.fillRect(xPos*tileSize, yPos*tileSize, tileSize, tileSize);
-			//highlight
-			g.setColor(HIGHLIGHT_COLOR);
-			g.fillRect(xPos*tileSize + tileSize/12, yPos*tileSize + tileSize/12, tileSize/3, tileSize/6);
-			g.fillRect(xPos*tileSize + tileSize/12, yPos*tileSize + tileSize/12, tileSize/6, tileSize/3);
-			//border
-			g.setColor(BORDER_COLOR);
-			g.drawRect(xPos*tileSize, yPos*tileSize, tileSize, tileSize);
+			paint(g, color, tileSize, xPos, yPos);
 		}
 		else {
 			// fill with empty space
