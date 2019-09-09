@@ -198,7 +198,7 @@ public class Game extends JPanel implements ActionListener {
 	}
 	
 	 /**@param p Point
-	  * @return true if tile is in bounds */
+	  * @return true if tile is in bounds to the left, right, or bottom of screen */
 	private static boolean isTileOutOfBounds(Point p) {
 		return p.x < 0 || p.x >= FIELD_WIDTH || p.y >= FIELD_HEIGHT;
 	}
@@ -217,7 +217,14 @@ public class Game extends JPanel implements ActionListener {
 	
 	/** @return true if piece is currently resting on top of another  */
 	private boolean hasLanded() {
-		return collides(0, 1, currentRotation) || isPieceOutOfBounds(0, 1, currentRotation);
+		if(collides(0, 1, currentRotation))
+			return true;
+		
+		for (Point p : currentPiece.getShape()[currentRotation])
+			if (offsetPoint(p, 0, 1).y >= FIELD_HEIGHT)
+				return true;
+		
+		return false;
 	}
 	
 	
@@ -278,8 +285,10 @@ public class Game extends JPanel implements ActionListener {
 				field[cp.x][cp.y].set(currentPiece.getColor());
 		}
 		score += clearLines();
+		System.out.print(currentPiece.getName());
+		System.out.print(": ");
 		System.out.print(score);
-		System.out.print(", at lvl");
+		System.out.print(" at lvl ");
 		System.out.println(level);
 		canMove = true;
 	}
@@ -310,12 +319,8 @@ public class Game extends JPanel implements ActionListener {
 		}
 	}
 	
-	
-
-	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		canMove = false;
 		if(hasLanded()) {
 			dropCurrentPieceIntoField();
 			currentPiece = getNextPiece();
@@ -325,7 +330,6 @@ public class Game extends JPanel implements ActionListener {
 		}
 		
 		repaint();
-		canMove = true;
 	}
 
 }

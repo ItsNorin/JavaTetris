@@ -15,7 +15,7 @@ public class Tetrimino {
 					{ new Point(-1, 1), new Point(0, 1), new Point(1, 1), new Point(2, 1) },
 					{ new Point(1, -1), new Point(1, 0), new Point(1, 1), new Point(1, 2) },
 					{ new Point(-1, 1), new Point(0, 1), new Point(1, 1), new Point(2, 1) } },
-			Color.CYAN);
+			new Color(1, 240, 240), "I");
 
 	// J-Piece
 	public static Tetrimino J = new Tetrimino(
@@ -24,7 +24,7 @@ public class Tetrimino {
 					{ new Point(1, 0), new Point(1, 1), new Point(1, 2), new Point(2, 2) },
 					{ new Point(0, 1), new Point(1, 1), new Point(2, 1), new Point(0, 2) },
 					{ new Point(1, 0), new Point(1, 1), new Point(1, 2), new Point(0, 0) } },
-			Color.BLUE);
+			new Color(0, 0, 240), "J");
 
 	// L-Piece
 	public static Tetrimino L = new Tetrimino(
@@ -33,7 +33,7 @@ public class Tetrimino {
 					{ new Point(1, 0), new Point(1, 1), new Point(1, 2), new Point(0, 2) },
 					{ new Point(0, 1), new Point(1, 1), new Point(2, 1), new Point(0, 0) },
 					{ new Point(1, 0), new Point(1, 1), new Point(1, 2), new Point(2, 0) } },
-			Color.ORANGE);
+			new Color(240, 160, 0),"L");
 
 	// O-Piece
 	public static Tetrimino O = new Tetrimino(
@@ -42,7 +42,7 @@ public class Tetrimino {
 					{ new Point(0, 0), new Point(0, 1), new Point(1, 0), new Point(1, 1) },
 					{ new Point(0, 0), new Point(0, 1), new Point(1, 0), new Point(1, 1) },
 					{ new Point(0, 0), new Point(0, 1), new Point(1, 0), new Point(1, 1) } },
-			Color.YELLOW);
+			Color.YELLOW, "O");
 	// S-Piece
 	public static Tetrimino S = new Tetrimino(
 			new Point[][] { 
@@ -50,7 +50,7 @@ public class Tetrimino {
 					{ new Point(0, 0), new Point(0, 1), new Point(1, 1), new Point(1, 2) },
 					{ new Point(1, 0), new Point(2, 0), new Point(0, 1), new Point(1, 1) },
 					{ new Point(0, 0), new Point(0, 1), new Point(1, 1), new Point(1, 2) } },
-			Color.GREEN);
+			new Color(0, 240, 0), "S");
 
 	// Z-Piece
 	public static Tetrimino Z = new Tetrimino(
@@ -59,7 +59,7 @@ public class Tetrimino {
 					{ new Point(1, 0), new Point(0, 1), new Point(1, 1), new Point(0, 2) },
 					{ new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(2, 1) },
 					{ new Point(1, 0), new Point(0, 1), new Point(1, 1), new Point(0, 2) } },
-			Color.RED);
+			new Color(240, 0, 0), "Z");
 
 	// T-Piece
 	public static Tetrimino T = new Tetrimino(
@@ -68,20 +68,22 @@ public class Tetrimino {
 					{ new Point(0, 1), new Point(1, 1), new Point(2, 1), new Point(1, 2) },
 					{ new Point(1, 0), new Point(0, 1), new Point(1, 1), new Point(1, 2) },
 					{ new Point(1, 0), new Point(0, 1), new Point(1, 1), new Point(2, 1) } },
-			Color.MAGENTA);
+			new Color(160, 0, 240), "T");
 
 	// shape of tetrimino based on rotation
 	// idea from https://gist.github.com/DataWraith/5236083
 	private Point[][] shape;
 	private Color color;
-
-	private Tetrimino(Point[][] shape, Color c) {
+	private String name;
+	
+	private Tetrimino(Point[][] shape, Color c, String name) {
 		this.shape = shape;
 		this.color = c;
+		this.name = name;
 	}
 
 	public Tetrimino(Tetrimino t) {
-		this(t.shape, t.color);
+		this(t.shape, t.color, t.name);
 	}
 
 	public Point[][] getShape() {
@@ -94,5 +96,9 @@ public class Tetrimino {
 
 	public void setColor(Color c) {
 		this.color = c;
+	}
+	
+	public String getName() {
+		return name;
 	}
 }
