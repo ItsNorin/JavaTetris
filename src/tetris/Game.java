@@ -20,13 +20,15 @@ import javax.swing.Timer;
 public class Game extends JPanel implements ActionListener {
 	private static final long serialVersionUID = -6492931191037187432L;
 
-	public static final int FIELD_WIDTH = 10, FIELD_HEIGHT = 20;
+	public static final int FIELD_WIDTH = 10, FIELD_HEIGHT = 25, VISIBLE_FIELD_HEIGHT = 20;
 	public static final int TILE_SIZE = 30;
 	
 	public static final int NUM_RANDOM_PIECES = 6;
 
-	private static final Dimension SCREEN_SIZE = new Dimension(FIELD_WIDTH * TILE_SIZE, FIELD_HEIGHT * TILE_SIZE);
-	private static final Point SPAWN_POS = new Point(FIELD_WIDTH/2 - 1, -1);
+	private static final Dimension SCREEN_SIZE = 
+			new Dimension(FIELD_WIDTH * TILE_SIZE, VISIBLE_FIELD_HEIGHT * TILE_SIZE);
+	private static final Point SPAWN_POS = 
+			new Point(FIELD_WIDTH/2 - 1, FIELD_HEIGHT - VISIBLE_FIELD_HEIGHT - 2);
 	
 	private Tile[][] field;
 	
@@ -48,6 +50,7 @@ public class Game extends JPanel implements ActionListener {
 	private int linesCleared;
 
 	private boolean canMove;
+	private boolean gameOver;
 	
 	public Game() {
 		setMinimumSize(SCREEN_SIZE);
@@ -61,11 +64,14 @@ public class Game extends JPanel implements ActionListener {
 		score = 0;
 		linesCleared = 0;
 		canMove = false;
+		gameOver = false;
 	}
 
 	
 	/** Resets everything so that it is ready for a new game */
 	public void init() {
+		gameOver = false;
+		
 		score = 0;
 		linesCleared = 0;
 		updateLevel();
@@ -79,7 +85,7 @@ public class Game extends JPanel implements ActionListener {
 		}
 		
 		pieceQue.clear();
-		currentPiece = getNextPiece();
+		getNextPiece();
 
 		canMove = true;
 		setVisible(true);
@@ -90,7 +96,7 @@ public class Game extends JPanel implements ActionListener {
 	 * @param dy y offset
 	 */
 	public void move(int dx, int dy) {
-		if(canMove) {
+		if(canMove && !gameOver) {
 			canMove = false;
 			if(!collides(dx, dy, currentRotation) && !isPieceOutOfBounds(dx, dy, currentRotation)) {
 				currentPosition.x += dx;
@@ -106,7 +112,7 @@ public class Game extends JPanel implements ActionListener {
 	 * @param clockwise True if clockwise, false if CCW
 	 */
 	public void rotate(boolean clockwise) {
-		if(canMove) {
+		if(canMove && !gameOver) {
 			canMove = false;
 			int newRotation = currentRotation;
 			
@@ -141,21 +147,24 @@ public class Game extends JPanel implements ActionListener {
 	
 	/** Resumes the game */
 	public void resume() {
-		canMove = true;
-		tm.start();
+		if(!gameOver) {
+			canMove = true;
+			tm.start();
+		}
 	}
 	
 	/**sets current piece to next piece in queue
 	 * Will ensure there are always NUM_RANDOM_PIECES in pieceQue
-	 * @return next piece in pieceQue */
-	private Tetrimino getNextPiece() {
+	 * @return true if piece spawns colliding with something, signifying game over */
+	private boolean getNextPiece() {
 		while(pieceQue.size() <= NUM_RANDOM_PIECES) {
 			pieceQue.add(r.nextInt(tetriminos.length));
 		}
 		currentRotation = 0;
 		currentPosition = new Point(SPAWN_POS);
 		//pieceCount++;
-		return tetriminos[pieceQue.poll()];
+		currentPiece = tetriminos[pieceQue.poll()];
+		return collides(0,0,0);
 	}
 	
 	/**
@@ -227,7 +236,7 @@ public class Game extends JPanel implements ActionListener {
 			System.out.print(" at lvl ");
 			System.out.println(level);
 			
-			currentPiece = getNextPiece();
+			gameOver = getNextPiece();
 		}
 		canMove = true;
 		return hasLanded;
@@ -257,21 +266,17 @@ public class Game extends JPanel implements ActionListener {
 				if(field[x][y].exists())
 					tileCount++;
 			
-			// translate everything above down
 			if(tileCount >= FIELD_WIDTH) {
 				clearedLineCount++;
+				// translate everything above down
 				for(int yT = y; yT > 0; yT--) 
 					for(int x = 0; x < FIELD_WIDTH; x++) 
 						field[x][yT] = field[x][yT-1];
+				// ensure new tiles are created at top
+				for(int x = 0; x < FIELD_WIDTH; x++) 
+					field[x][0] = new Tile(); 
 			}
 		}
-		
-		// ensure new tiles are created at top
-		// this better fix the damn ascension issue
-		for(int i = 0; i < clearedLineCount; i++) 
-			for(int x = 0; x < FIELD_WIDTH; x++)
-				if(!field[x][i].exists())
-					field[x][i] = new Tile();
 
 		linesCleared += clearedLineCount;
 		updateLevel();
@@ -310,11 +315,11 @@ public class Game extends JPanel implements ActionListener {
 	public void paintComponent(Graphics g) {
 		// paint all in tile
 		for (int x = 0; x < FIELD_WIDTH; x++) 
-			for (int y = 0; y < FIELD_HEIGHT; y++) 
-				field[x][y].paint(g, TILE_SIZE, x, y);
+			for (int y = 0; y < VISIBLE_FIELD_HEIGHT; y++) 
+				field[x][y + (FIELD_HEIGHT - VISIBLE_FIELD_HEIGHT)].paint(g, TILE_SIZE, x, y);
 
 		for (Point p : currentPiece.getShape()[currentRotation]) {
-			Point cp = offsetPoint(p,0,0);
+			Point cp = offsetPoint(p,0,-5);
 
 			if (!isTileOutOfBounds(cp)) 
 				Tile.paint(g, currentPiece.getColor(), TILE_SIZE, cp.x, cp.y);
@@ -323,9 +328,14 @@ public class Game extends JPanel implements ActionListener {
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		checkLanding();
-		move(0, 1);
-		repaint();
+		if(!gameOver) {
+			checkLanding();
+			move(0, 1);
+			repaint();
+		}
+		else {
+			init();
+		}
 	}
 
 }

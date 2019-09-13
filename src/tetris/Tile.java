@@ -24,6 +24,12 @@ public class Tile {
 		set(color);
 	}
 	
+	Tile(Tile t) {
+		clear();
+		if(t.exists)
+			set(t.color);
+	}
+	
 	
 	/** Makes tile exist
 	 * @param color Color of tile

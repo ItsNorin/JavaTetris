@@ -11,10 +11,10 @@ public class Tetrimino {
 	// I-Piece
 	public static Tetrimino I = new Tetrimino(
 			new Point[][] {
-					{ new Point(1, -1), new Point(1, 0), new Point(1, 1), new Point(1, 2) },
 					{ new Point(-1, 1), new Point(0, 1), new Point(1, 1), new Point(2, 1) },
 					{ new Point(1, -1), new Point(1, 0), new Point(1, 1), new Point(1, 2) },
-					{ new Point(-1, 1), new Point(0, 1), new Point(1, 1), new Point(2, 1) } },
+					{ new Point(-1, 1), new Point(0, 1), new Point(1, 1), new Point(2, 1) },
+					{ new Point(1, -1), new Point(1, 0), new Point(1, 1), new Point(1, 2) } },
 			new Color(1, 240, 240), "I");
 
 	// J-Piece
@@ -29,10 +29,10 @@ public class Tetrimino {
 	// L-Piece
 	public static Tetrimino L = new Tetrimino(
 			new Point[][] { 
-					{ new Point(0, 1), new Point(1, 1), new Point(2, 1), new Point(2, 2) },
-					{ new Point(1, 0), new Point(1, 1), new Point(1, 2), new Point(0, 2) },
-					{ new Point(0, 1), new Point(1, 1), new Point(2, 1), new Point(0, 0) },
-					{ new Point(1, 0), new Point(1, 1), new Point(1, 2), new Point(2, 0) } },
+					{ new Point(0, 0), new Point(1, 0), new Point(2, 0), new Point(2, 1) },
+					{ new Point(1, -1), new Point(1, 0), new Point(1, 1), new Point(0, 1) },
+					{ new Point(0, 0), new Point(1, 0), new Point(2, 0), new Point(0, -1) },
+					{ new Point(1, -1), new Point(1, 0), new Point(1, 1), new Point(2, -1) } },
 			new Color(240, 160, 0),"L");
 
 	// O-Piece
@@ -64,10 +64,10 @@ public class Tetrimino {
 	// T-Piece
 	public static Tetrimino T = new Tetrimino(
 			new Point[][] { 
-					{ new Point(1, 0), new Point(1, 1), new Point(2, 1), new Point(1, 2) },
-					{ new Point(0, 1), new Point(1, 1), new Point(2, 1), new Point(1, 2) },
-					{ new Point(1, 0), new Point(0, 1), new Point(1, 1), new Point(1, 2) },
-					{ new Point(1, 0), new Point(0, 1), new Point(1, 1), new Point(2, 1) } },
+					{ new Point(1, -1), new Point(1, 0), new Point(2, 0), new Point(1, 1) },
+					{ new Point(0,  0), new Point(1, 0), new Point(2, 0), new Point(1, 1) },
+					{ new Point(1, -1), new Point(0, 0), new Point(1, 0), new Point(1, 1) },
+					{ new Point(1, -1), new Point(0, 0), new Point(1, 0), new Point(2, 0) } },
 			new Color(160, 0, 240), "T");
 
 	// shape of tetrimino based on rotation
@@ -82,7 +82,7 @@ public class Tetrimino {
 		this.name = name;
 	}
 
-	public Tetrimino(Tetrimino t) {
+	Tetrimino(Tetrimino t) {
 		this(t.shape, t.color, t.name);
 	}
 
