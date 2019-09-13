@@ -69,24 +69,17 @@ public class Game extends JPanel implements ActionListener {
 		score = 0;
 		linesCleared = 0;
 		updateLevel();
+		// lets game know it should move piece
+		tm.setRepeats(true);
 		
 		for (int x = 0; x < FIELD_WIDTH; x++) {
 			for (int y = 0; y < FIELD_HEIGHT; y++) {
-				if(field[x][y] == null)
 					field[x][y] = new Tile();
-				else
-					field[x][y].clear();
 			}
 		}
 		
 		pieceQue.clear();
-		
 		currentPiece = getNextPiece();
-		
-		// lets game know it should move piece
-		tm.setDelay(1000);
-		tm.setRepeats(true);
-		
 
 		canMove = true;
 		setVisible(true);
@@ -108,6 +101,7 @@ public class Game extends JPanel implements ActionListener {
 		}
 	}
 	
+	
 	/** rotates piece if possible in given direction
 	 * @param clockwise True if clockwise, false if CCW
 	 */
@@ -123,7 +117,6 @@ public class Game extends JPanel implements ActionListener {
 			
 			if(newRotation < 0)
 				newRotation += 4;
-			
 			else if(newRotation > 3)
 				newRotation -= 4;
 			
@@ -152,14 +145,6 @@ public class Game extends JPanel implements ActionListener {
 		tm.start();
 	}
 	
-	/** resets current position to spawn point of pieces */
-	public void resetCurrentPosition() {
-		currentRotation = 0;
-		currentPosition = new Point(SPAWN_POS);
-	}
-
-	
-	
 	/**sets current piece to next piece in queue
 	 * Will ensure there are always NUM_RANDOM_PIECES in pieceQue
 	 * @return next piece in pieceQue */
@@ -167,7 +152,9 @@ public class Game extends JPanel implements ActionListener {
 		while(pieceQue.size() <= NUM_RANDOM_PIECES) {
 			pieceQue.add(r.nextInt(tetriminos.length));
 		}
-		resetCurrentPosition();
+		currentRotation = 0;
+		currentPosition = new Point(SPAWN_POS);
+		//pieceCount++;
 		return tetriminos[pieceQue.poll()];
 	}
 	
@@ -215,51 +202,83 @@ public class Game extends JPanel implements ActionListener {
 		return false;
 	}
 	
-	/** @return true if piece is currently resting on top of another  */
-	private boolean hasLanded() {
-		if(collides(0, 1, currentRotation))
-			return true;
+	/** @return true if piece has landed*/
+	private boolean checkLanding() {
+		canMove = false;
+		boolean hasLanded = collides(0, 1, currentRotation);
 		
 		for (Point p : currentPiece.getShape()[currentRotation])
 			if (offsetPoint(p, 0, 1).y >= FIELD_HEIGHT)
-				return true;
+				hasLanded = true;
 		
-		return false;
+		
+		if(hasLanded) {
+			for(int i = 0; i < 4; i++) {
+				Point cp = offsetPoint(currentPiece.getShape()[currentRotation][i], 0, 0);
+				if(!isTileOutOfBounds(cp)) 
+					field[cp.x][cp.y].set(currentPiece.getColor());
+			}
+			
+			score += clearLines();
+			
+			System.out.print(currentPiece.getName());
+			System.out.print(": ");
+			System.out.print(score);
+			System.out.print(" at lvl ");
+			System.out.println(level);
+			
+			currentPiece = getNextPiece();
+		}
+		canMove = true;
+		return hasLanded;
 	}
 	
-	
-	/**Clears lines on board
+	/**Clears lines on board around current piece
 	 * @return score for clearing lines based on level and number of lines cleared
 	 */
 	private int clearLines() {
 		canMove = false;
-		int n = 0;
-		int maxY = 0;
+		int clearedLineCount = 0;
 		
-		for(int y = FIELD_HEIGHT - 1; y >= maxY; y--) {
-			int xCount = 0;
-			for(int x = 0; x < FIELD_WIDTH; x++) 
+		int minPieceYOffset = 100;
+		int maxPieceYOffset = 0;
+		// get range in which to clear lines
+		for(Point p : currentPiece.getShape()[currentRotation]) {
+			if(minPieceYOffset > p.y)
+				minPieceYOffset = p.y;
+			if(maxPieceYOffset < p.y)
+				maxPieceYOffset = p.y;
+		}
+		
+		// start from highest line and work down
+		for(int y = currentPosition.y + minPieceYOffset; y <= currentPosition.y + maxPieceYOffset; y++) {
+			int tileCount = 0;
+			for(int x = 0; x < FIELD_WIDTH; x++)
 				if(field[x][y].exists())
-					xCount++;
+					tileCount++;
 			
-			// I don't think its possible to have floating pieces, so stop translating down
-			if(xCount == 0)
-				maxY = y;
-			
-			// move everything above cleared line down
-			if(xCount >= FIELD_WIDTH) {
-				n++;
-				for(int Y = y; Y > maxY; Y--) 
-					for(int X = 0; X < FIELD_WIDTH; X++)
-						field[X][Y] = field[X][Y-1];
-				y++;
+			// translate everything above down
+			if(tileCount >= FIELD_WIDTH) {
+				clearedLineCount++;
+				for(int yT = y; yT > 0; yT--) 
+					for(int x = 0; x < FIELD_WIDTH; x++) 
+						field[x][yT] = field[x][yT-1];
 			}
 		}
+		
+		// ensure new tiles are created at top
+		// this better fix the damn ascension issue
+		for(int i = 0; i < clearedLineCount; i++) 
+			for(int x = 0; x < FIELD_WIDTH; x++)
+				if(!field[x][i].exists())
+					field[x][i] = new Tile();
 
-		linesCleared += n;
+		linesCleared += clearedLineCount;
+		updateLevel();
+		
 		canMove = true;
 		
-		switch(n) {
+		switch(clearedLineCount) {
 		case 1: 	return 40   * (level + 1);
 		case 2: 	return 100  * (level + 1);
 		case 3: 	return 300  * (level + 1);
@@ -275,23 +294,6 @@ public class Game extends JPanel implements ActionListener {
 		speed = (int)(Math.pow(0.8 - ((level - 1)*0.007), level - 1)*1000);
 		tm.setDelay(speed);
 	} 
-	
-	/** makes current piece part of the field */
-	private void dropCurrentPieceIntoField() {
-		canMove = false;
-		for(int i = 0; i < 4; i++) {
-			Point cp = offsetPoint(currentPiece.getShape()[currentRotation][i], 0, 0);
-			if(!isTileOutOfBounds(cp)) 
-				field[cp.x][cp.y].set(currentPiece.getColor());
-		}
-		score += clearLines();
-		System.out.print(currentPiece.getName());
-		System.out.print(": ");
-		System.out.print(score);
-		System.out.print(" at lvl ");
-		System.out.println(level);
-		canMove = true;
-	}
 	
 	
 	
@@ -321,14 +323,8 @@ public class Game extends JPanel implements ActionListener {
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if(hasLanded()) {
-			dropCurrentPieceIntoField();
-			currentPiece = getNextPiece();
-		}
-		else {
-			currentPosition.move(currentPosition.x, currentPosition.y + 1);;
-		}
-		
+		checkLanding();
+		move(0, 1);
 		repaint();
 	}
 

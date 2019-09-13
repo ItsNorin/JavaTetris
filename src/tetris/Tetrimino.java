@@ -72,9 +72,9 @@ public class Tetrimino {
 
 	// shape of tetrimino based on rotation
 	// idea from https://gist.github.com/DataWraith/5236083
-	private Point[][] shape;
+	private final Point[][] shape;
+	private final String name;
 	private Color color;
-	private String name;
 	
 	private Tetrimino(Point[][] shape, Color c, String name) {
 		this.shape = shape;
